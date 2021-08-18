@@ -13,6 +13,7 @@ Created on Tue Aug 10 18:42:00 2021
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+plt.rcParams['font.family'] = "Times New Roman"
 
 def fitness(X, MS, PT):
     P = X.shape[0]
@@ -27,7 +28,6 @@ def fitness(X, MS, PT):
         cumulative_running_time = np.zeros(N) # 機台累積運轉時間
         cumulative_processing_time = np.zeros(N) # 工件累積加工時間
         
-        # X[i] = np.array([8, 6, 6, 2, 0, 4, 6, 7, 4, 7, 3, 2, 6, 2, 5, 4, 3, 1, 0, 4, 3, 8, 4, 2, 4, 3, 7, 9, 0, 9, 7, 2, 0, 9, 5, 9, 1, 3, 5, 2, 6, 1, 0, 2, 3, 8, 2, 1, 4, 9, 1, 0, 3, 7, 0, 3, 4, 6, 8, 9, 3, 5, 8, 6, 1, 7, 7, 8, 8, 9, 5, 1, 0, 7, 8, 5, 1, 6, 8, 9, 5, 6, 6, 0, 5, 9, 0, 1, 3, 4, 9, 5, 7, 8, 2, 7, 2, 5, 4, 1])
         for step, J_idx in enumerate(X[i]):
             O_idx = cumulative_processing_counter[J_idx] # 取得工件J_idx當前的加工程序別
             cost = PT.iloc[J_idx, O_idx] # 取得工件J_idx的加工時間
@@ -174,7 +174,8 @@ def fix_chromosome(X, N, M):
         #         break
             
         # step1. 紀錄每個工件的出現次數
-        counter = np.bincount(X[i])
+        counter = [sum(X[i]==val) for val in range(N)]
+        counter = np.array(counter)
         # 建立一個空籃子
         basket = []
         
@@ -201,16 +202,73 @@ def fix_chromosome(X, N, M):
         
     return X
 
+def gantt(gbest_X, MS, PT):
+    P = X.shape[0]
+    D = X.shape[1]
+    N = MS.shape[0] # 工件數
+    M = MS.shape[1] # 機台數
+    F = np.zeros(P)
+    gbest_X = gbest_X.astype(int)
+    
+    Machine = [[] for i in range(M)]
+    Job = [[] for i in range(N)]
+
+    cumulative_processing_counter = np.zeros(N, dtype=int) # 工件累積加工次數
+    cumulative_running_time = np.zeros(N) # 機台累積運轉時間
+    cumulative_processing_time = np.zeros(N) # 工件累積加工時間
+    
+    for step, J_idx in enumerate(gbest_X):
+        O_idx = cumulative_processing_counter[J_idx] # 取得工件J_idx當前的加工程序別
+        cost = PT.iloc[J_idx, O_idx] # 取得工件J_idx的加工時間
+        M_idx = MS.iloc[J_idx, O_idx] # 取得工件J_idx的機台別
+        
+        cumulative_processing_time[J_idx] = cumulative_processing_time[J_idx] + cost
+        cumulative_running_time[M_idx] = cumulative_running_time[M_idx] + cost
+    
+        if cumulative_running_time[M_idx]<cumulative_processing_time[J_idx]:
+            cumulative_running_time[M_idx]=cumulative_processing_time[J_idx]
+        elif cumulative_running_time[M_idx]>cumulative_processing_time[J_idx]:
+            cumulative_processing_time[J_idx]=cumulative_running_time[M_idx]
+            
+        present = cumulative_processing_time[J_idx] - cost
+        increment = cost
+        
+        Machine[M_idx].append((present, increment))
+        Job[M_idx].append('Job ' +str(J_idx+1))
+        print(Machine[0], Machine[1], Machine[2])
+    
+        cumulative_processing_counter[J_idx] = cumulative_processing_counter[J_idx] + 1
+        # print('所有工件的累積加工次數 '+str(cumulative_processing_counter))
+    
+    plt.figure(dpi=100, facecolor='white')
+    plt.title("Gantt Chart", pad=10, fontsize=16, fontweight='bold') # 標題
+    # '#BC3C28', '#0972B5', '#E28726', '#21854D'
+    plt.broken_barh(Machine[0], (30, 5), facecolors='#BC3C28', edgecolor='black', label='Machine 1', zorder=2)
+    plt.broken_barh(Machine[1], (20, 5), facecolors='#0972B5', edgecolor='black', label='Machine 2', zorder=2)
+    plt.broken_barh(Machine[2], (10, 5), facecolors='#E28726', edgecolor='black', label='Machine 3', zorder=2)
+    for txt_set, loc_set, y_loc in zip(Job, Machine, [35-2.5, 25-2.5, 15-2.5]):
+        for txt, loc in zip(txt_set, loc_set):
+            plt.text(loc[0]+1, y_loc-.5, txt, fontsize='medium', alpha=1)
+            # print(1)
+    plt.legend(frameon=False, ncol=4, loc='lower center', bbox_to_anchor=(0.5, -.3)) # 每一row顯示4個圖例
+    plt.xlabel('Time', fontsize=15) # X軸標題
+    plt.ylabel('Machine', fontsize=15) # Y軸標題
+    plt.yticks([35-2.5, 25-2.5, 15-2.5], ['M1', 'M2', 'M3'])
+    plt.grid(linestyle="-", linewidth=.5, color="gray", alpha=.6) # 網格
+    plt.tight_layout() # 自動校正
+
 #%% 資料載入
-MS = pd.read_excel('JSP_dataset.xlsx', sheet_name=0) - 1
-PT = pd.read_excel('JSP_dataset.xlsx', sheet_name=1)
+MS = pd.read_excel('JSP_3x3.xlsx', sheet_name=0) - 1
+PT = pd.read_excel('JSP_3x3.xlsx', sheet_name=1)
+# MS = pd.read_excel('JSP_10x10.xlsx', sheet_name=0) - 1
+# PT = pd.read_excel('JSP_10x10.xlsx', sheet_name=1)
 
 #%% 參數設定
 N = MS.shape[0] # 工件數
 M = MS.shape[1] # 機台數
 P = 30
 D = N*M
-G = 2000
+G = 3
 pc = 0.8
 pm = 0.2
 er = 0.1
@@ -269,3 +327,6 @@ plt.plot(loss_curve)
 plt.grid()
 plt.xlabel('Iteration')
 plt.ylabel('Fitness')
+plt.tight_layout()
+
+gantt(gbest_X, MS, PT)
