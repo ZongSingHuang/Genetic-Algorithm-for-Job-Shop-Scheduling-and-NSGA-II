@@ -203,6 +203,7 @@ def fix_chromosome(X, N, M):
     return X
 
 def gantt(gbest_X, MS, PT):
+    # https://www.gushiciku.cn/pl/gXr9/zh-hk
     P = X.shape[0]
     D = X.shape[1]
     N = MS.shape[0] # 工件數
@@ -238,37 +239,34 @@ def gantt(gbest_X, MS, PT):
         print(Machine[0], Machine[1], Machine[2])
     
         cumulative_processing_counter[J_idx] = cumulative_processing_counter[J_idx] + 1
-        # print('所有工件的累積加工次數 '+str(cumulative_processing_counter))
     
     plt.figure(dpi=100, facecolor='white')
     plt.title("Gantt Chart", pad=10, fontsize=16, fontweight='bold') # 標題
-    # '#BC3C28', '#0972B5', '#E28726', '#21854D'
-    plt.broken_barh(Machine[0], (30, 5), facecolors='#BC3C28', edgecolor='black', label='Machine 1', zorder=2)
-    plt.broken_barh(Machine[1], (20, 5), facecolors='#0972B5', edgecolor='black', label='Machine 2', zorder=2)
-    plt.broken_barh(Machine[2], (10, 5), facecolors='#E28726', edgecolor='black', label='Machine 3', zorder=2)
-    for txt_set, loc_set, y_loc in zip(Job, Machine, [35-2.5, 25-2.5, 15-2.5]):
+    for i in range(M):
+        color = ['#BC3C28', '#0972B5', '#E28726', '#21854D']
+        plt.broken_barh(Machine[i], (10*(i+1), 5), facecolors=color[i%4], edgecolor='black', label='Machine '+str(i+1), zorder=2)
+    for txt_set, loc_set, m in zip(Job, Machine, range(M)):
         for txt, loc in zip(txt_set, loc_set):
-            plt.text(loc[0]+1, y_loc-.5, txt, fontsize='medium', alpha=1)
-            # print(1)
-    plt.legend(frameon=False, ncol=4, loc='lower center', bbox_to_anchor=(0.5, -.3)) # 每一row顯示4個圖例
+            plt.text(loc[0]+1, 10*(m+1)+2, txt, fontsize='medium', alpha=1)
+    plt.legend(frameon=False, ncol=5, loc='lower center', bbox_to_anchor=(0.5, -.15), fontsize='x-large') # 每一row顯示4個圖例
     plt.xlabel('Time', fontsize=15) # X軸標題
     plt.ylabel('Machine', fontsize=15) # Y軸標題
-    plt.yticks([35-2.5, 25-2.5, 15-2.5], ['M1', 'M2', 'M3'])
+    plt.yticks([10*(i+1)+2.5 for i in range(M)], ['M'+str(i+1) for i in range(M)])
     plt.grid(linestyle="-", linewidth=.5, color="gray", alpha=.6) # 網格
     plt.tight_layout() # 自動校正
 
 #%% 資料載入
-MS = pd.read_excel('JSP_3x3.xlsx', sheet_name=0) - 1
-PT = pd.read_excel('JSP_3x3.xlsx', sheet_name=1)
-# MS = pd.read_excel('JSP_10x10.xlsx', sheet_name=0) - 1
-# PT = pd.read_excel('JSP_10x10.xlsx', sheet_name=1)
+# MS = pd.read_excel('JSP_3x3.xlsx', sheet_name=0) - 1
+# PT = pd.read_excel('JSP_3x3.xlsx', sheet_name=1)
+MS = pd.read_excel('JSP_10x10.xlsx', sheet_name=0) - 1
+PT = pd.read_excel('JSP_10x10.xlsx', sheet_name=1)
 
 #%% 參數設定
 N = MS.shape[0] # 工件數
 M = MS.shape[1] # 機台數
 P = 30
 D = N*M
-G = 3
+G = 2000
 pc = 0.8
 pm = 0.2
 er = 0.1
