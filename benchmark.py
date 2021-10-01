@@ -10,39 +10,49 @@ import pandas as pd
 
 def makespan_3(X, M, N):
     X = X.astype(int)
-    Process_Time = np.array([[8.00, 10.0, 5.00],
-                             [15.0, 9.00, 12.0],
-                             [9.00, 7.00, 19.0]])
-
     P = X.shape[0]
+    F = np.zeros([P])
+    
+    Cost = np.array([[8.00, 10.0, 5.00],
+                     [15.0, 9.00, 12.0],
+                     [9.00, 7.00, 19.0]])
+    Sequence = np.array([[2, 3, 1],
+                         [1, 3, 2],
+                         [3, 2, 1]], dtype=int) - 1
+
     
     for i in range(P):
-        PH_remove = np.tile(np.arange(M, dtype=int), N).reshape(N, M).tolist() # 加工履歷 Processing history
-        PH = pd.DataFrame(data=np.zeros([N, M])-1, columns=['operation 1', 'operation 2', 'operation 3'], index=['job 1', 'job 2', 'job 3'], dtype=int) # 加工履歷 Processing history
-        CWH_machine = np.zeros([M], dtype=int) # 累計工時 Cumulative working hours
-        CWH_job = pd.DataFrame(data=np.zeros([N]), columns=['time'], index=['job 1', 'job 2', 'job 3'], dtype=int) # 累計工時 Cumulative working hours
-        
-        O = np.zeros([N], dtype=int) # 加工次數
-        print('初始化 累計工時、加工履歷')
-        print('當前候選解為 {X}'.format(X=X[i]))
+        Machine = pd.DataFrame(data=np.zeros([M]), columns=['Time'],
+                                                   index=['M1', 'M2', 'M3'],)
+        Job = pd.DataFrame(data=np.zeros([N]), columns=['Time'],
+                                               index=['J1', 'J2', 'J3'])
+        Operation = pd.DataFrame(data=np.zeros([N]), columns=['CT'],
+                                                     index=['J1', 'J2', 'J3'], dtype=int)
+
         X[i] = np.array([1, 0, 2, 0, 0, 1, 2, 1, 2], dtype=int)
         
         for job in X[i]:
-            pre = CWH_machine + Process_Time[job, O[job]] # 預加
-            sorted_idx = np.argsort(pre) # 依makespan由小到大做排序
+            # 1. 取得Job的Operation之工時與機台
+            operation = Operation.iloc[job]
+            sequence = Sequence[job, operation]
+            cost = Cost[job, operation]
             
-            for machine in sorted_idx:
-                if machine in PH_remove[job]:
-                    PH_remove[job].remove(machine)
-                    PH.iloc[job, O[job]] = machine
-                    CWH_machine[machine] += Process_Time[job, O[job]]
-                    O[job] += 1
-                    break
+            # 2. 更新時間與次數
+            Machine.iloc[sequence] += cost
+            Job.iloc[job] += cost
+            Operation.iloc[job] += 1
+            
+            # 3. 修正時間
+            fixed_time = np.maximum(Machine.iloc[sequence].values, Job.iloc[job].values)
+            Machine.iloc[sequence] = fixed_time
+            Job.iloc[job] = fixed_time
+            
+            # 4. 更新甘特圖
         
-        print(123)
+        # makespan
+        F[i] = np.max(Machine.values)
         
-        
-    return 0
+    return F
 
 def makespan_10(X, M, N):
     Process_Time = np.array([[1.00, 2.00, 3.00, 4.00, 5.00, 6.00, 7.00, 8.00, 9.00, 10.0],
