@@ -6,7 +6,6 @@ Created on Mon Sep 27 15:43:29 2021
 """
 
 import numpy as np
-import pandas as pd
 
 def makespan_3(X, M, N):
     if X.ndim==1:

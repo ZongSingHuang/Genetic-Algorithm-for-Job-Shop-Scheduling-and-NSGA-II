@@ -27,7 +27,6 @@ class GA():
         self.gbest_F = np.inf
         self.loss_curve = np.zeros(self.G)
         
-        
     def opt(self):
         SST = time.time()
         
