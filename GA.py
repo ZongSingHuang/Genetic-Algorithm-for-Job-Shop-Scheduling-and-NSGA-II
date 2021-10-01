@@ -7,10 +7,11 @@ Created on Mon Sep 27 11:52:03 2021
 
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 class GA():
     def __init__(self, fitness, D=30, P=20, G=500, M=5, N=5,
-                 pc=0.8, pm=0.5):
+                 pc=0.8, pm=0.1, er=0.1, ir=0.1):
         self.fitness = fitness
         self.D = D
         self.P = P
@@ -32,27 +33,57 @@ class GA():
         # 迭代
         for g in range(self.G):
             # 適應值計算
+            st = time.time()
             F = self.fitness(self.X)
+            ed = time.time()
+            print('適應值計算:' + str(ed-st))
             
             # 更新最佳解
+            st = time.time()
             if np.min(F) < self.gbest_F:
                 idx = F.argmin()
                 self.gbest_X = self.X[idx].copy()
                 self.gbest_F = F.min()
+            ed = time.time()
+            print('更新最佳解:' + str(ed-st))
             
             # 收斂曲線
+            st = time.time()
             self.loss_curve[g] = self.gbest_F
+            ed = time.time()
+            print('收斂曲線:' + str(ed-st))
             
             # 更新
+            st = time.time()
             p1, p2 = self.selection(F)
+            ed = time.time()
+            print('選擇:' + str(ed-st))
             
+            st = time.time()
             o1, o2 = self.crossover(p1, p2)
+            ed = time.time()
+            print('交配:' + str(ed-st))
             
+            st = time.time()
             o1 = self.fix_chromosome(o1)
             o2 = self.fix_chromosome(o2)
+            ed = time.time()
+            print('修復:' + str(ed-st))
             
+            st = time.time()
             o1 = self.mutation(o1)
             o2 = self.mutation(o2)
+            ed = time.time()
+            print('突變:' + str(ed-st))
+            
+            self.X = np.vstack([o1, o2])
+            
+            new_X, new_F = self.elitism(X, F, new_X, new_F, er)
+            
+            new_X, new_F = self.immigrant(new_X, new_F, ir, M, pt)
+            
+            print('gbest_F:' + str(self.gbest_F))
+            print('-'*20)
     
     def initialization(self):
         X = np.zeros([self.P, self.D])
@@ -146,3 +177,43 @@ class GA():
             o[i, idx] = basket.copy()
         
         return o
+    
+    def elitism(self, X, F, new_X, new_F, er):
+        P = X.shape[0]
+        elitism_size = int(P*er)
+        
+        if elitism_size>0:
+            idx = np.argsort(F)
+            elitism_idx = idx[:elitism_size]
+            elite_X = X[elitism_idx]
+            elite_F = F[elitism_idx]
+            
+            for i in range(elitism_size):
+                
+                if elite_F[i]<new_F.mean():
+                    idx = np.argsort(new_F)
+                    worst_idx = idx[-1]
+                    new_X[worst_idx] = elite_X[i]
+                    new_F[worst_idx] = elite_F[i]
+        
+        return new_X, new_F
+    
+    def immigrant(self, new_X, new_F, ir, M, pt):
+        P = new_X.shape[0]
+        D = new_X.shape[1]
+        N = P
+        immigrant_size = int(P*er)
+        
+        if immigrant_size>0:
+            
+            for i in range(immigrant_size):
+                immigrant_X = np.random.choice(M, size=[1, D])
+                immigrant_F = fitness(immigrant_X, pt, N, M)
+                
+                if immigrant_F<new_F.mean():
+                    idx = np.argsort(new_F)
+                    worst_idx = idx[-1]
+                    new_X[worst_idx] = immigrant_X
+                    new_F[worst_idx] = immigrant_F
+        
+        return new_X, new_F
