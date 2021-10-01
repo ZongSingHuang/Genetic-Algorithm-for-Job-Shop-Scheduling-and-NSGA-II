@@ -20,6 +20,8 @@ class GA():
         self.N = N
         self.pc = pc
         self.pm = pm
+        self.er = er
+        self.ir = ir
         
         self.gbest_X = np.zeros([self.D])
         self.gbest_F = np.inf
@@ -27,17 +29,19 @@ class GA():
         
         
     def opt(self):
+        SST = time.time()
+        
         # 初始化
         self.X = self.initialization()
+
+        # 適應值計算
+        F = self.fitness(self.X)
         
         # 迭代
         for g in range(self.G):
-            # 適應值計算
-            st = time.time()
-            F = self.fitness(self.X)
-            ed = time.time()
-            print('適應值計算:' + str(ed-st))
+            ST = time.time()
             
+            print('世代:' + str(g+1) + '/' + str(self.G))
             # 更新最佳解
             st = time.time()
             if np.min(F) < self.gbest_F:
@@ -53,37 +57,61 @@ class GA():
             ed = time.time()
             print('收斂曲線:' + str(ed-st))
             
-            # 更新
+            # 選擇
             st = time.time()
             p1, p2 = self.selection(F)
             ed = time.time()
             print('選擇:' + str(ed-st))
             
+            # 交配
             st = time.time()
             o1, o2 = self.crossover(p1, p2)
             ed = time.time()
             print('交配:' + str(ed-st))
             
+            # 修復
             st = time.time()
             o1 = self.fix_chromosome(o1)
             o2 = self.fix_chromosome(o2)
             ed = time.time()
             print('修復:' + str(ed-st))
             
+            # 突變
             st = time.time()
             o1 = self.mutation(o1)
             o2 = self.mutation(o2)
             ed = time.time()
             print('突變:' + str(ed-st))
             
-            self.X = np.vstack([o1, o2])
+            # 合併
+            st = time.time()
+            X_new = np.vstack([o1, o2])
+            ed = time.time()
+            print('合併:' + str(ed-st))
             
-            new_X, new_F = self.elitism(X, F, new_X, new_F, er)
+            # 適應值計算
+            st = time.time()
+            F_new = self.fitness(X_new)
+            ed = time.time()
+            print('適應值計算:' + str(ed-st))
             
-            new_X, new_F = self.immigrant(new_X, new_F, ir, M, pt)
+            # 移民
+            X_new, F_new = self.immigrant(X_new, F_new)
+            
+            # 菁英
+            X_new, F_new = self.elitism(self.X, F, X_new, F_new)
+        
+            self.X = X_new.copy()
+            F = F_new.copy()
+            
+            ED = time.time()
             
             print('gbest_F:' + str(self.gbest_F))
+            print('時間:' + str(ED-ST))
             print('-'*20)
+        
+        EED = time.time()
+        print('時間:' + str(EED-SST))
     
     def initialization(self):
         X = np.zeros([self.P, self.D])
@@ -178,9 +206,9 @@ class GA():
         
         return o
     
-    def elitism(self, X, F, new_X, new_F, er):
+    def elitism(self, X, F, X_new, F_new):
         P = X.shape[0]
-        elitism_size = int(P*er)
+        elitism_size = int(P*self.er)
         
         if elitism_size>0:
             idx = np.argsort(F)
@@ -190,30 +218,29 @@ class GA():
             
             for i in range(elitism_size):
                 
-                if elite_F[i]<new_F.mean():
-                    idx = np.argsort(new_F)
+                if elite_F[i]<F_new.mean():
+                    idx = np.argsort(F_new)
                     worst_idx = idx[-1]
-                    new_X[worst_idx] = elite_X[i]
-                    new_F[worst_idx] = elite_F[i]
+                    X_new[worst_idx] = elite_X[i]
+                    F_new[worst_idx] = elite_F[i]
         
-        return new_X, new_F
+        return X_new, F_new
     
-    def immigrant(self, new_X, new_F, ir, M, pt):
-        P = new_X.shape[0]
-        D = new_X.shape[1]
-        N = P
-        immigrant_size = int(P*er)
+    def immigrant(self, X_new, F_new):
+        P = X_new.shape[0]
+        immigrant_size = int(P*self.ir)
         
         if immigrant_size>0:
+            job_set = np.arange(self.N)
+            immigrant_X = np.repeat(job_set, self.M)
             
             for i in range(immigrant_size):
-                immigrant_X = np.random.choice(M, size=[1, D])
-                immigrant_F = fitness(immigrant_X, pt, N, M)
+                immigrant_F = self.fitness(immigrant_X)
                 
-                if immigrant_F<new_F.mean():
-                    idx = np.argsort(new_F)
+                if immigrant_F<F_new.mean():
+                    idx = np.argsort(F_new)
                     worst_idx = idx[-1]
-                    new_X[worst_idx] = immigrant_X
-                    new_F[worst_idx] = immigrant_F
+                    X_new[worst_idx] = immigrant_X.copy()
+                    F_new[worst_idx] = immigrant_F
         
-        return new_X, new_F
+        return X_new, F_new

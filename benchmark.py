@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 
 def makespan_3(X, M, N):
+    if X.ndim==1:
+        X = X.reshape(1, -1)
     X = X.astype(int)
     P = X.shape[0]
     F = np.zeros([P])
@@ -50,6 +52,8 @@ def makespan_3(X, M, N):
     return F
 
 def makespan_10(X, M, N):
+    if X.ndim==1:
+        X = X.reshape(1, -1)
     X = X.astype(int)
     P = X.shape[0]
     F = np.zeros([P])

@@ -13,7 +13,7 @@ import benchmark
 
 M = 10
 N = 10
-P = 30
+P = 60
 G = 500
 D = M*N
 
@@ -28,3 +28,5 @@ time = ed - st
 gbest_X = optimizer.gbest_X
 gbest_F = optimizer.gbest_F
 loss_curves = optimizer.loss_curve
+
+print(gbest_X)
