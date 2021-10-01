@@ -14,7 +14,7 @@ import benchmark
 M = 10
 N = 10
 P = 60
-G = 500
+G = 1000
 D = M*N
 
 makespan = functools.partial(benchmark.makespan_10, M=M, N=N)
