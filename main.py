@@ -25,7 +25,7 @@ optimizer = GA(fitness=makespan,
 st = time.time()
 optimizer.opt()
 ed = time.time()
-time = ed - st
+cost = ed - st
 gbest_X = optimizer.gbest_X
 gbest_F = optimizer.gbest_F
 loss_curves = optimizer.loss_curve
@@ -41,7 +41,7 @@ print(gbest_X)
 # st = time.time()
 # optimizer.opt()
 # ed = time.time()
-# time = ed - st
+# cost = ed - st
 # gbest_X = optimizer.gbest_X
 # gbest_F = optimizer.gbest_F
 # loss_curves = optimizer.loss_curve
