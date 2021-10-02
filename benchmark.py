@@ -7,6 +7,49 @@ Created on Mon Sep 27 15:43:29 2021
 
 import numpy as np
 
+def makespan_2(X, M, N):
+    if X.ndim==1:
+        X = X.reshape(1, -1)
+    X = X.astype(int)
+    P = X.shape[0]
+    F = np.zeros([P])
+    
+    Cost = np.array([[2.00, 2.00],
+                     [3.00, 1.00],
+                     [1.00, 1.00]])
+    Sequence = np.array([[1, 2],
+                         [2, 1],
+                         [2, 1]], dtype=int) - 1
+
+    
+    for i in range(P):
+        Machine = np.zeros([M])
+        Job = np.zeros([N])
+        Operation = np.zeros([N], dtype=int)
+        
+        for job in X[i]:
+            # 1. 取得Job的Operation之工時與機台
+            operation = Operation[job]
+            sequence = Sequence[job, operation]
+            cost = Cost[job, operation]
+            
+            # 2. 更新時間與次數
+            Machine[sequence] += cost
+            Job[job] += cost
+            Operation[job] += 1
+            
+            # 3. 修正時間
+            fixed_time = np.maximum(Machine[sequence], Job[job])
+            Machine[sequence] = fixed_time
+            Job[job] = fixed_time
+            
+            # 4. 更新甘特圖
+        
+        # makespan
+        F[i] = Machine.max()
+        
+    return F
+
 def makespan_3(X, M, N):
     if X.ndim==1:
         X = X.reshape(1, -1)

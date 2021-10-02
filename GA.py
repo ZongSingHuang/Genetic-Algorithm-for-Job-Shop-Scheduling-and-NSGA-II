@@ -7,7 +7,6 @@ Created on Mon Sep 27 11:52:03 2021
 
 import numpy as np
 import matplotlib.pyplot as plt
-import time
 
 class GA():
     def __init__(self, fitness, D=30, P=20, G=500, M=5, N=5,
@@ -28,8 +27,6 @@ class GA():
         self.loss_curve = np.zeros(self.G)
         
     def opt(self):
-        SST = time.time()
-        
         # 初始化
         self.X = self.initialization()
 
@@ -38,61 +35,35 @@ class GA():
         
         # 迭代
         for g in range(self.G):
-            ST = time.time()
-            
-            print('世代:' + str(g+1) + '/' + str(self.G))
+
             # 更新最佳解
-            st = time.time()
             if np.min(F) < self.gbest_F:
                 idx = F.argmin()
                 self.gbest_X = self.X[idx].copy()
                 self.gbest_F = F.min()
-            ed = time.time()
-            print('更新最佳解:' + str(ed-st))
             
             # 收斂曲線
-            st = time.time()
             self.loss_curve[g] = self.gbest_F
-            ed = time.time()
-            print('收斂曲線:' + str(ed-st))
             
             # 選擇
-            st = time.time()
             p1, p2 = self.selection(F)
-            ed = time.time()
-            print('選擇:' + str(ed-st))
             
             # 交配
-            st = time.time()
             o1, o2 = self.crossover(p1, p2)
-            ed = time.time()
-            print('交配:' + str(ed-st))
             
             # 修復
-            st = time.time()
             o1 = self.fix_chromosome(o1)
             o2 = self.fix_chromosome(o2)
-            ed = time.time()
-            print('修復:' + str(ed-st))
             
             # 突變
-            st = time.time()
             o1 = self.mutation(o1)
             o2 = self.mutation(o2)
-            ed = time.time()
-            print('突變:' + str(ed-st))
             
             # 合併
-            st = time.time()
             X_new = np.vstack([o1, o2])
-            ed = time.time()
-            print('合併:' + str(ed-st))
             
             # 適應值計算
-            st = time.time()
             F_new = self.fitness(X_new)
-            ed = time.time()
-            print('適應值計算:' + str(ed-st))
             
             # 移民
             X_new, F_new = self.immigrant(X_new, F_new)
@@ -102,15 +73,6 @@ class GA():
         
             self.X = X_new.copy()
             F = F_new.copy()
-            
-            ED = time.time()
-            
-            print('gbest_F:' + str(self.gbest_F))
-            print('時間:' + str(ED-ST))
-            print('-'*20)
-        
-        EED = time.time()
-        print('時間:' + str(EED-SST))
     
     def initialization(self):
         X = np.zeros([self.P, self.D])
