@@ -29,6 +29,7 @@ cost = ed - st
 gbest_X = optimizer.gbest_X
 gbest_F = optimizer.gbest_F
 loss_curves = optimizer.loss_curve
+print(cost)
 print(gbest_F)
 print(gbest_X)
 print('-'*20)
@@ -47,6 +48,7 @@ cost = ed - st
 gbest_X = optimizer.gbest_X
 gbest_F = optimizer.gbest_F
 loss_curves = optimizer.loss_curve
+print(cost)
 print(gbest_F)
 print(gbest_X)
 print('-'*20)
@@ -65,6 +67,7 @@ cost = ed - st
 gbest_X = optimizer.gbest_X
 gbest_F = optimizer.gbest_F
 loss_curves = optimizer.loss_curve
+print(cost)
 print(gbest_F)
 print(gbest_X)
 print('-'*20)
